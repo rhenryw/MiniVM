@@ -132,6 +132,67 @@ class DSLLinuxVM {
         }
     }
 
+    showDownloadProgress() {
+        const progressContainer = document.getElementById('downloadProgressContainer');
+        if (progressContainer) {
+            progressContainer.style.display = 'block';
+        }
+    }
+
+    hideDownloadProgress() {
+        const progressContainer = document.getElementById('downloadProgressContainer');
+        if (progressContainer) {
+            progressContainer.style.display = 'none';
+        }
+    }
+
+    updateDownloadProgress(data) {
+        const { loaded, total, lengthComputable } = data;
+        
+        if (!lengthComputable || !total) {
+        
+            const progressText = document.getElementById('progressText');
+            const progressPercentage = document.getElementById('progressPercentage');
+            
+            if (progressText) progressText.textContent = 'Downloading DSL Linux ISO...';
+            if (progressPercentage) progressPercentage.textContent = '...';
+            return;
+        }
+
+        const percentage = Math.round((loaded / total) * 100);
+        const loadedMB = (loaded / (1024 * 1024)).toFixed(1);
+        const totalMB = (total / (1024 * 1024)).toFixed(0);
+
+        const progressFill = document.getElementById('progressFill');
+        if (progressFill) {
+            progressFill.style.width = `${percentage}%`;
+        }
+
+        const progressPercentage = document.getElementById('progressPercentage');
+        if (progressPercentage) {
+            progressPercentage.textContent = `${percentage}%`;
+        }
+
+        const progressLoaded = document.getElementById('progressLoaded');
+        const progressTotal = document.getElementById('progressTotal');
+        
+        if (progressLoaded) {
+            progressLoaded.textContent = `${loadedMB} MB`;
+        }
+        if (progressTotal) {
+            progressTotal.textContent = `of ${totalMB} MB`;
+        }
+
+        this.updateStatus(`Downloading DSL Linux... ${percentage}% (${loadedMB}MB / ${totalMB}MB)`);
+
+        if (percentage >= 100) {
+            setTimeout(() => {
+                this.hideDownloadProgress();
+                this.updateStatus('Download complete! Starting virtual machine...');
+            }, 1000);
+        }
+    }
+
     showPauseDialog() {
         this.pauseVM();
         document.getElementById('vmContainer').classList.add('paused');
@@ -143,6 +204,8 @@ class DSLLinuxVM {
 
     async startVM() {
         if (this.isVMStarted) return;
+        
+        this.hideDownloadProgress();
         
         if (this.selectedIsoSource === 'local' && !this.localIsoFile) {
             this.updateStatus('❌ Please select a local ISO file');
@@ -268,6 +331,24 @@ class DSLLinuxVM {
                 this.updateButton('Start VM', false);
                 this.exitVM();
             });
+
+            if (this.selectedIsoSource === 'hosted') {
+                this.showDownloadProgress();
+                
+                this.emulator.add_listener("download-progress", (data) => {
+                    if (data.file_name && data.file_name.includes('.iso')) {
+                        this.updateDownloadProgress(data);
+                    }
+                });
+
+                this.emulator.add_listener("download-error", (data) => {
+                    console.error('Download error:', data);
+                    this.hideDownloadProgress();
+                    this.updateStatus('❌ Download failed. Please try again.');
+                    this.updateButton('Start VM', false);
+                    this.exitVM();
+                });
+            }
 
             this.emulator.add_listener("serial0-output-byte", (byte) => {
             });
@@ -424,6 +505,8 @@ class DSLLinuxVM {
         if (this.emulator) {
             this.emulator.stop();
         }
+        
+        this.hideDownloadProgress();
         
         this.resetVMContainer();
         this.hidePauseDialog();

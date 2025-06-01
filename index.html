@@ -55,6 +55,23 @@
         <button class="start-button" id="startButton" onclick="startVM()">
             Start VM
         </button>
+        
+        <div class="download-progress-container" id="downloadProgressContainer" style="display: none;">
+            <div class="progress-info">
+                <span class="progress-text" id="progressText">Downloading DSL Linux ISO...</span>
+                <span class="progress-percentage" id="progressPercentage">0%</span>
+            </div>
+            <div class="progress-bar-wrapper">
+                <div class="progress-bar" id="progressBar">
+                    <div class="progress-fill" id="progressFill"></div>
+                </div>
+            </div>
+            <div class="progress-details">
+                <span class="progress-loaded" id="progressLoaded">0 MB</span>
+                <span class="progress-total" id="progressTotal">of 685 MB</span>
+            </div>
+        </div>
+        
         <div class="status" id="status"></div>
         
         <div class="faq-section">
