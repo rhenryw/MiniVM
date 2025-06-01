@@ -148,6 +148,14 @@ class DSLLinuxVM {
                 return;
             }
 
+            this.updateStatus('Checking resources...');
+            const resourceChecks = await this.checkResources();
+            if (!resourceChecks.success) {
+                this.updateStatus('❌ ' + resourceChecks.error);
+                this.updateButton('Start VM', false);
+                return;
+            }
+
             document.getElementById('mainContent').classList.add('hidden');
             document.getElementById('vmContainer').classList.add('active');
 
@@ -157,6 +165,17 @@ class DSLLinuxVM {
             } catch (err) {
                 console.log('Fullscreen request failed:', err.message);
             }
+
+            this.updateStatus('Starting virtual machine...');
+
+            // Log environment information for debugging
+            console.log('Environment info:', {
+                userAgent: navigator.userAgent,
+                isSecureContext: window.isSecureContext,
+                location: window.location.href,
+                hasWebAssembly: typeof WebAssembly !== 'undefined',
+                hasV86: typeof V86 !== 'undefined'
+            });
 
             this.emulator = new V86({
                 wasm_path: "js/v86.wasm",
@@ -186,9 +205,21 @@ class DSLLinuxVM {
                 bzimage_initrd_from_filesystem: false,
             });
 
+            // Add timeout for VM initialization
+            const initTimeout = setTimeout(() => {
+                if (!this.isVMStarted) {
+                    console.error('VM initialization timeout');
+                    this.updateStatus('❌ VM initialization timeout. Check browser console for details.');
+                    this.updateButton('Start VM', false);
+                    this.exitVM();
+                }
+            }, 30000); // 30 second timeout
+
             this.emulator.add_listener("emulator-ready", () => {
+                clearTimeout(initTimeout);
                 this.isVMStarted = true;
                 console.log('VM Ready - Starting DSL Linux boot process...');
+                this.updateStatus('VM started! DSL Linux is booting...');
                 
                 setTimeout(() => {
                     if (this.emulator) {
@@ -199,10 +230,18 @@ class DSLLinuxVM {
 
             this.emulator.add_listener("emulator-started", () => {
                 console.log('VM Started - DSL Linux is booting...');
+                this.updateStatus('DSL Linux is booting... Please wait.');
             });
 
             this.emulator.add_listener("emulator-stopped", () => {
                 console.log('VM Stopped');
+            });
+
+            this.emulator.add_listener("emulator-error", (error) => {
+                console.error('VM Error:', error);
+                this.updateStatus('❌ VM Error: ' + error);
+                this.updateButton('Start VM', false);
+                this.exitVM();
             });
 
             this.emulator.add_listener("serial0-output-byte", (byte) => {
@@ -214,6 +253,71 @@ class DSLLinuxVM {
             this.updateButton('Start VM', false);
             this.exitVM();
         }
+    }
+
+    async checkResources() {
+        const resources = [
+            { url: 'js/v86.wasm', name: 'WASM runtime' },
+            { url: 'js/seabios.bin', name: 'BIOS' },
+            { url: 'js/vgabios.bin', name: 'VGA BIOS' },
+            { url: 'dsl-2024.rc7.iso', name: 'DSL Linux ISO' }
+        ];
+
+        for (const resource of resources) {
+            try {
+                console.log(`Checking ${resource.name}...`);
+                const response = await fetch(resource.url, { method: 'HEAD' });
+                if (!response.ok) {
+                    console.error(`Failed to load ${resource.name}:`, response.status, response.statusText);
+                    
+                    // Special handling for ISO file
+                    if (resource.url.includes('.iso')) {
+                        return { 
+                            success: false, 
+                            error: `DSL Linux ISO not available (${response.status}). File may be too large for deployment platform. Try hosting the 685MB ISO file on a CDN.` 
+                        };
+                    }
+                    
+                    return { 
+                        success: false, 
+                        error: `Cannot load ${resource.name} (${response.status})` 
+                    };
+                }
+                
+                // Check file size for ISO
+                if (resource.url.includes('.iso')) {
+                    const contentLength = response.headers.get('content-length');
+                    if (contentLength) {
+                        const sizeMB = Math.round(parseInt(contentLength) / (1024 * 1024));
+                        console.log(`✓ ${resource.name} available (${sizeMB}MB)`);
+                        if (sizeMB < 100) {
+                            console.warn('ISO file seems smaller than expected. Original is 685MB.');
+                        }
+                    } else {
+                        console.log(`✓ ${resource.name} available (size unknown)`);
+                    }
+                } else {
+                    console.log(`✓ ${resource.name} available`);
+                }
+            } catch (error) {
+                console.error(`Error checking ${resource.name}:`, error);
+                
+                // Special handling for ISO file
+                if (resource.url.includes('.iso')) {
+                    return { 
+                        success: false, 
+                        error: `DSL Linux ISO cannot be loaded: ${error.message}. This is likely because the 685MB file exceeds the deployment platform's size limits.` 
+                    };
+                }
+                
+                return { 
+                    success: false, 
+                    error: `Cannot load ${resource.name}: ${error.message}` 
+                };
+            }
+        }
+
+        return { success: true };
     }
 
     pauseVM() {
