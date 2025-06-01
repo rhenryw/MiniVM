@@ -58,6 +58,23 @@ If you skip downloading the ISO to your server, the application will only accept
 3. The virtual machine will boot Damn Small Linux automatically
 4. Interact with the Linux desktop environment directly in your browser
 
+## 🌐 Internet Connectivity
+
+The virtual machine accesses the internet through your **client's internet connection**. Here's how it works:
+
+- **No separate network** - The VM doesn't have its own internet connection
+- **Browser-mediated access** - All network requests are routed through your host browser
+- **Client-side networking** - Uses your local machine's internet connection and network settings
+- **Proxy-like behavior** - The browser acts as a network proxy for the virtual machine
+- **Same IP address** - External websites will see your client machine's IP address
+- **Firewall considerations** - Respects your local firewall and network security settings
+
+### Network Limitations
+
+- Some network features may be limited compared to a native Linux installation
+- Advanced networking configurations may not be fully supported
+- Performance depends on your client's internet speed and latency
+
 ## 🌍 Deployment
 
 This project can be deployed on any static hosting provider:
