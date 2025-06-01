@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DSL Linux - Web Desktop VM</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="particles-js"></div>
+    
+    <div class="main-content" id="mainContent">
+        <h1>🖥️ DSL Linux</h1>
+        <p class="subtitle">Web Desktop Virtual Machine</p>
+        <button class="start-button" id="startButton" onclick="startVM()">
+            Start VM
+        </button>
+        <div class="status" id="status"></div>
+        
+        <div class="faq-section">
+            <h3>💡 Troubleshooting & FAQ</h3>
+            <div class="faq-content">
+                <div class="faq-item">
+                    <strong>Q: I see a grey square, is it broken?</strong>
+                    <p>A: No! The grey square means the VM is loading. DSL Linux is ~700MB, so initial loading may take 1-5 minutes depending on your connection.</p>
+                </div>
+                <div class="faq-item">
+                    <strong>Q: The VM seems stuck or frozen?</strong>
+                    <p>A: Wait a few minutes for the boot process to complete. If still stuck, try refreshing the page and starting again.</p>
+                </div>
+                <div class="faq-item">
+                    <strong>Q: How do I interact with the VM?</strong>
+                    <p>A: Click inside the VM screen to capture your mouse and keyboard. Press ESC to exit fullscreen mode.</p>
+                </div>
+                <div class="faq-item">
+                    <strong>Q: Performance issues?</strong>
+                    <p>A: Close other browser tabs and applications. The VM requires significant system resources to run smoothly.</p>
+                </div>
+                <div class="faq-item">
+                    <strong>Q: Login credentials?</strong>
+                    <p>A: Username: <code>dsl</code> (no password required). You'll boot directly to the desktop.</p>
+                </div>
+            </div>
+            <div class="disclaimer">
+                <p><em>⚠️ This is just a proof of concept and may not work on all devices or browsers.</em></p>
+                <p class="attribution">Made with <span id="randomEmoji">🚀</span> by <a href="https://rhw.one" target="_blank">RHW</a></p>
+            </div>
+        </div>
+    </div>
+
+    <div class="vm-container" id="vmContainer">
+        <div class="vm-controls">
+            <button class="exit-button" onclick="exitVM()">Exit Fullscreen (ESC)</button>
+        </div>
+        
+        <div id="screen_container">
+            <div>Initializing Virtual Machine...</div>
+            <canvas style="display: none"></canvas>
+        </div>
+        
+        <div class="info">
+            <p>Press ESC to exit fullscreen | Default login: <strong>dsl</strong> (no password)</p>
+        </div>
+
+        <div class="pause-overlay">
+            <div class="pause-dialog">
+                <h3>⏸️ VM Paused</h3>
+                <p>The virtual machine has been paused. Would you like to continue running it in the background or stop it completely?</p>
+                <div class="dialog-buttons">
+                    <button class="primary" onclick="handleContinue()">Re-enter</button>
+                    <button class="secondary" onclick="handleStop()">Stop VM</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"></script>
+    <script src="js/libv86.js"></script>
+    <script src="script.js"></script>
+    
+    <script>
+
+        const emojis = ['🚀', '💻', '⚡', '🔥', '✨', '🎯', '🌟', '💎', '🎪', '🎨', '🎭', '🎬', '🎮', '🎲', '🎸', '🎺', '🎼', '🎹', '🎤', '🎧'];
+        document.getElementById('randomEmoji').textContent = emojis[Math.floor(Math.random() * emojis.length)];
+    </script>
+</body>
+</html>

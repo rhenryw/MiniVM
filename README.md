@@ -1,2 +1,1 @@
-# TinyVM
-Mini VM
+# Mini CLient Side VM
