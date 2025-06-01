@@ -329,6 +329,36 @@ h1 {
     text-decoration: underline;
 }
 
+.github-link {
+    margin-top: 1rem;
+}
+
+.github-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.5rem;
+    background: #24292e;
+    color: #ffffff !important;
+    text-decoration: none;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(36, 41, 46, 0.2);
+}
+
+.github-btn:hover {
+    background: #2f363d;
+    text-decoration: none !important;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(36, 41, 46, 0.3);
+}
+
+.github-btn i {
+    font-size: 1.1rem;
+}
+
 #randomEmoji {
     display: inline-block;
     animation: pulse 2s infinite;
@@ -822,5 +852,10 @@ h1 {
     .toggle-icon {
         font-size: 1.5em;
         margin-bottom: 4px;
+    }
+
+    .github-btn {
+        padding: 0.6rem 1.2rem;
+        font-size: 0.85rem;
     }
 } 
