@@ -4,10 +4,14 @@ class DSLLinuxVM {
         this.isVMStarted = false;
         this.isPaused = false;
         this.isFullscreen = false;
+        this.selectedIsoSource = 'hosted'; 
+        this.localIsoFile = null;
+        this.localIsoUrl = null;
         
         this.initializeParticles();
         this.bindEvents();
-        this.updateStatus('Click Start VM to launch DSL Linux in fullscreen mode');
+        this.initializeIsoSelection();
+        this.updateStatus('Choose your DSL Linux source and click Start VM to launch in fullscreen mode');
     }
 
     initializeParticles() {
@@ -138,6 +142,11 @@ class DSLLinuxVM {
     async startVM() {
         if (this.isVMStarted) return;
         
+        if (this.selectedIsoSource === 'local' && !this.localIsoFile) {
+            this.updateStatus('❌ Please select a local ISO file');
+            return;
+        }
+        
         try {
             this.updateButton('<span class="loading"></span>Loading...', true);
             this.updateStatus('Initializing virtual machine...');
@@ -166,16 +175,33 @@ class DSLLinuxVM {
                 console.log('Fullscreen request failed:', err.message);
             }
 
-            this.updateStatus('Starting virtual machine...');
+            if (this.selectedIsoSource === 'local') {
+                this.updateStatus(`Starting virtual machine with ${this.localIsoFile.name}...`);
+            } else {
+                this.updateStatus('Starting virtual machine with hosted DSL Linux...');
+            }
 
-            // Log environment information for debugging
             console.log('Environment info:', {
                 userAgent: navigator.userAgent,
                 isSecureContext: window.isSecureContext,
                 location: window.location.href,
                 hasWebAssembly: typeof WebAssembly !== 'undefined',
-                hasV86: typeof V86 !== 'undefined'
+                hasV86: typeof V86 !== 'undefined',
+                isoSource: this.selectedIsoSource,
+                localFile: this.selectedIsoSource === 'local' ? this.localIsoFile.name : null
             });
+
+            let cdromConfig;
+            if (this.selectedIsoSource === 'local') {
+                const arrayBuffer = await this.localIsoFile.arrayBuffer();
+                cdromConfig = {
+                    buffer: arrayBuffer,
+                };
+            } else {
+                cdromConfig = {
+                    url: "dsl-2024.rc7.iso",
+                };
+            }
 
             this.emulator = new V86({
                 wasm_path: "js/v86.wasm",
@@ -188,9 +214,7 @@ class DSLLinuxVM {
                 vga_bios: {
                     url: "js/vgabios.bin",
                 },
-                cdrom: {
-                    url: "dsl-2024.rc7.iso",
-                },
+                cdrom: cdromConfig,
                 autostart: true,
                 boot_order: 0x231,
                 disable_mouse: false,
@@ -205,7 +229,6 @@ class DSLLinuxVM {
                 bzimage_initrd_from_filesystem: false,
             });
 
-            // Add timeout for VM initialization
             const initTimeout = setTimeout(() => {
                 if (!this.isVMStarted) {
                     console.error('VM initialization timeout');
@@ -256,12 +279,17 @@ class DSLLinuxVM {
     }
 
     async checkResources() {
-        const resources = [
+        let resources = [
             { url: 'js/v86.wasm', name: 'WASM runtime' },
             { url: 'js/seabios.bin', name: 'BIOS' },
-            { url: 'js/vgabios.bin', name: 'VGA BIOS' },
-            { url: 'dsl-2024.rc7.iso', name: 'DSL Linux ISO' }
+            { url: 'js/vgabios.bin', name: 'VGA BIOS' }
         ];
+
+        if (this.selectedIsoSource === 'hosted') {
+            resources.push({ url: 'dsl-2024.rc7.iso', name: 'DSL Linux ISO' });
+        } else {
+            console.log('✓ Using local ISO file:', this.localIsoFile.name);
+        }
 
         for (const resource of resources) {
             try {
@@ -270,11 +298,10 @@ class DSLLinuxVM {
                 if (!response.ok) {
                     console.error(`Failed to load ${resource.name}:`, response.status, response.statusText);
                     
-                    // Special handling for ISO file
                     if (resource.url.includes('.iso')) {
                         return { 
                             success: false, 
-                            error: `DSL Linux ISO not available (${response.status}). File may be too large for deployment platform. Try hosting the 685MB ISO file on a CDN.` 
+                            error: `DSL Linux ISO not available (${response.status}). File may be too large for deployment platform. Try using a local ISO file instead.` 
                         };
                     }
                     
@@ -284,7 +311,6 @@ class DSLLinuxVM {
                     };
                 }
                 
-                // Check file size for ISO
                 if (resource.url.includes('.iso')) {
                     const contentLength = response.headers.get('content-length');
                     if (contentLength) {
@@ -302,11 +328,10 @@ class DSLLinuxVM {
             } catch (error) {
                 console.error(`Error checking ${resource.name}:`, error);
                 
-                // Special handling for ISO file
                 if (resource.url.includes('.iso')) {
                     return { 
                         success: false, 
-                        error: `DSL Linux ISO cannot be loaded: ${error.message}. This is likely because the 685MB file exceeds the deployment platform's size limits.` 
+                        error: `DSL Linux ISO cannot be loaded: ${error.message}. Consider using a local ISO file instead.` 
                     };
                 }
                 
@@ -415,7 +440,8 @@ class DSLLinuxVM {
         document.getElementById('vmContainer').classList.remove('active');
         document.getElementById('mainContent').classList.remove('hidden');
         this.updateButton('Start VM', false);
-        this.updateStatus('Click Start VM to launch DSL Linux in fullscreen mode');
+        
+        this.updateStartButtonState();
         
         this.isVMStarted = false;
         this.isPaused = false;
@@ -438,25 +464,194 @@ class DSLLinuxVM {
         this.hidePauseDialog();
         this.exitVM();
     }
+
+    initializeIsoSelection() {
+        const toggleSwitch = document.getElementById('sourceToggle');
+        const toggleOptions = document.querySelectorAll('.toggle-option');
+        
+        this.updateToggleState('hosted');
+        
+        toggleSwitch.addEventListener('click', () => {
+            const newSource = this.selectedIsoSource === 'hosted' ? 'local' : 'hosted';
+            this.selectedIsoSource = newSource;
+            this.updateToggleState(newSource);
+            this.toggleLocalFileSection();
+            this.updateStartButtonState();
+        });
+        
+        toggleOptions.forEach(option => {
+            option.addEventListener('click', () => {
+                const value = option.dataset.value;
+                if (value !== this.selectedIsoSource) {
+                    this.selectedIsoSource = value;
+                    this.updateToggleState(value);
+                    this.toggleLocalFileSection();
+                    this.updateStartButtonState();
+                }
+            });
+        });
+
+        const fileInput = document.getElementById('isoFileInput');
+        fileInput.addEventListener('change', (e) => {
+            this.handleFileSelection(e.target.files[0]);
+        });
+
+        const removeFileBtn = document.getElementById('removeFile');
+        removeFileBtn.addEventListener('click', () => {
+            this.removeSelectedFile();
+        });
+
+        const uploadArea = document.getElementById('fileUploadArea');
+        
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.style.borderColor = '#007acc';
+            uploadArea.style.background = '#f0f8ff';
+        });
+
+        uploadArea.addEventListener('dragleave', (e) => {
+            e.preventDefault();
+            uploadArea.style.borderColor = '#ccc';
+            uploadArea.style.background = '#fafafa';
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.style.borderColor = '#ccc';
+            uploadArea.style.background = '#fafafa';
+            
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                this.handleFileSelection(files[0]);
+            }
+        });
+    }
+
+    updateToggleState(selectedValue) {
+        const toggleSwitch = document.getElementById('sourceToggle');
+        const toggleOptions = document.querySelectorAll('.toggle-option');
+        
+        if (selectedValue === 'local') {
+            toggleSwitch.classList.add('active');
+        } else {
+            toggleSwitch.classList.remove('active');
+        }
+        
+        toggleOptions.forEach(option => {
+            if (option.dataset.value === selectedValue) {
+                option.classList.add('active');
+            } else {
+                option.classList.remove('active');
+            }
+        });
+    }
+
+    toggleLocalFileSection() {
+        const localSection = document.getElementById('localFileSection');
+        if (this.selectedIsoSource === 'local') {
+            localSection.style.display = 'block';
+        } else {
+            localSection.style.display = 'none';
+            this.removeSelectedFile(); 
+        }
+    }
+
+    handleFileSelection(file) {
+        if (!file) return;
+
+        if (!file.name.toLowerCase().endsWith('.iso')) {
+            alert('Please select a valid ISO file.');
+            return;
+        }
+
+        const maxSize = 1024 * 1024 * 1024; 
+        if (file.size > maxSize) {
+            alert('File is too large. Please select an ISO file smaller than 1GB.');
+            return;
+        }
+
+        this.localIsoFile = file;
+        
+        if (this.localIsoUrl) {
+            URL.revokeObjectURL(this.localIsoUrl);
+        }
+        this.localIsoUrl = URL.createObjectURL(file);
+
+        this.displaySelectedFile(file);
+        this.updateStartButtonState();
+    }
+
+    displaySelectedFile(file) {
+        const fileName = document.getElementById('fileName');
+        const fileSize = document.getElementById('fileSize');
+        const fileInfo = document.getElementById('fileInfo');
+        const uploadPlaceholder = document.querySelector('.upload-placeholder');
+
+        fileName.textContent = file.name;
+        fileSize.textContent = this.formatFileSize(file.size);
+        
+        uploadPlaceholder.style.display = 'none';
+        fileInfo.style.display = 'flex';
+    }
+
+    removeSelectedFile() {
+        this.localIsoFile = null;
+        if (this.localIsoUrl) {
+            URL.revokeObjectURL(this.localIsoUrl);
+            this.localIsoUrl = null;
+        }
+
+        const fileInfo = document.getElementById('fileInfo');
+        const uploadPlaceholder = document.querySelector('.upload-placeholder');
+        const fileInput = document.getElementById('isoFileInput');
+
+        fileInfo.style.display = 'none';
+        uploadPlaceholder.style.display = 'flex';
+        fileInput.value = '';
+
+        this.updateStartButtonState();
+    }
+
+    formatFileSize(bytes) {
+        if (bytes === 0) return '0 Bytes';
+        
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
+
+    updateStartButtonState() {
+        const startButton = document.getElementById('startButton');
+        
+        if (this.selectedIsoSource === 'hosted') {
+            startButton.disabled = false;
+            this.updateStatus('Ready to start with hosted DSL Linux version');
+        } else if (this.selectedIsoSource === 'local' && this.localIsoFile) {
+            startButton.disabled = false;
+            this.updateStatus(`Ready to start with local ISO: ${this.localIsoFile.name}`);
+        } else {
+            startButton.disabled = true;
+            this.updateStatus('Please select a local ISO file to continue');
+        }
+    }
 }
 
-let vm;
-document.addEventListener('DOMContentLoaded', function() {
-    vm = new DSLLinuxVM();
-});
+const vm = new DSLLinuxVM();
 
 function startVM() {
-    if (vm) vm.startVM();
+    vm.startVM();
 }
 
 function exitVM() {
-    if (vm) vm.exitVM();
+    vm.exitVM();
 }
 
 function handleContinue() {
-    if (vm) vm.handleContinue();
+    vm.handleContinue();
 }
 
 function handleStop() {
-    if (vm) vm.handleStop();
+    vm.handleStop();
 } 

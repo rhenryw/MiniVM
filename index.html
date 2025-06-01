@@ -12,6 +12,46 @@
     <div class="main-content" id="mainContent">
         <h1>🖥️ MiniVM (DSL Linux)</h1>
         <p class="subtitle">Web Desktop Virtual Machine</p>
+        <div class="iso-source-selection" id="isoSourceSelection">
+            <h3>📀 Choose DSL Linux Source</h3>
+            
+            <div class="source-toggle-container">
+                <div class="toggle-option" data-value="hosted">
+                    <span class="toggle-icon">🌐</span>
+                    <span class="toggle-label">Hosted Version</span>
+                    <span class="toggle-description">Use version from website (~685MB)</span>
+                </div>
+                
+                <div class="toggle-switch" id="sourceToggle">
+                    <div class="toggle-slider"></div>
+                </div>
+                
+                <div class="toggle-option" data-value="local">
+                    <span class="toggle-icon">📁</span>
+                    <span class="toggle-label">Local ISO File</span>
+                    <span class="toggle-description">Upload your own DSL ISO</span>
+                </div>
+            </div>
+            
+            <div class="local-file-section" id="localFileSection" style="display: none;">
+                <div class="file-upload-area" id="fileUploadArea">
+                    <input type="file" id="isoFileInput" accept=".iso" style="display: none;">
+                    <div class="upload-placeholder" onclick="document.getElementById('isoFileInput').click()">
+                        <span class="upload-icon">📁</span>
+                        <span class="upload-text">Click to select DSL ISO file</span>
+                        <span class="upload-hint">Supports .iso files up to 1GB • Drag & drop supported</span>
+                    </div>
+                    <div class="file-info" id="fileInfo" style="display: none;">
+                        <div class="file-details">
+                            <span class="file-name" id="fileName"></span>
+                            <span class="file-size" id="fileSize"></span>
+                        </div>
+                        <button class="remove-file" id="removeFile" title="Remove file">✕</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
         <button class="start-button" id="startButton" onclick="startVM()">
             Start VM
         </button>
@@ -39,6 +79,10 @@
                 <div class="faq-item">
                     <strong>Q: Login credentials?</strong>
                     <p>A: Username: <code>dsl</code> (no password required). You'll boot directly to the desktop.</p>
+                </div>
+                <div class="faq-item">
+                    <strong>Q: Can I use my own ISO file?</strong>
+                    <p>A: Yes! Select "Local ISO File" above and upload your own DSL Linux ISO. This provides faster loading and allows you to use customized versions.</p>
                 </div>
             </div>
             <div class="disclaimer">

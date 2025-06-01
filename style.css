@@ -1,4 +1,3 @@
-
 * {
     margin: 0;
     padding: 0;
@@ -89,9 +88,16 @@ h1 {
 }
 
 .start-button:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-    transform: none;
+    background: #ccc !important;
+    color: #666 !important;
+    cursor: not-allowed !important;
+    box-shadow: none !important;
+    transform: none !important;
+}
+
+.start-button:disabled:hover {
+    background: #ccc !important;
+    transform: none !important;
 }
 
 .exit-button {
@@ -432,5 +438,244 @@ h1 {
     
     .pause-overlay .dialog-buttons button {
         width: 100%;
+    }
+}
+
+.iso-source-selection {
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 12px;
+    padding: 24px;
+    margin: 24px 0;
+    border: 1px solid #e0e0e0;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.iso-source-selection h3 {
+    margin: 0 0 20px 0;
+    color: #333;
+    font-size: 1.2em;
+    text-align: center;
+}
+
+.source-toggle-container {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    margin-bottom: 20px;
+    background: #f8f9fa;
+    border-radius: 12px;
+    padding: 20px;
+}
+
+.toggle-option {
+    flex: 1;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    padding: 12px;
+    border-radius: 8px;
+}
+
+.toggle-option.active {
+    background: rgba(0, 122, 204, 0.1);
+    color: #007acc;
+}
+
+.toggle-option:hover {
+    background: rgba(0, 122, 204, 0.05);
+}
+
+.toggle-icon {
+    display: block;
+    font-size: 2em;
+    margin-bottom: 8px;
+}
+
+.toggle-label {
+    display: block;
+    font-size: 1.1em;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 4px;
+}
+
+.toggle-option.active .toggle-label {
+    color: #007acc;
+}
+
+.toggle-description {
+    display: block;
+    font-size: 0.9em;
+    color: #666;
+    line-height: 1.3;
+}
+
+.toggle-switch {
+    position: relative;
+    width: 60px;
+    height: 30px;
+    background: #ccc;
+    border-radius: 15px;
+    cursor: pointer;
+    transition: background 0.3s ease;
+    flex-shrink: 0;
+}
+
+.toggle-switch.active {
+    background: #007acc;
+}
+
+.toggle-slider {
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 24px;
+    height: 24px;
+    background: white;
+    border-radius: 50%;
+    transition: transform 0.3s ease;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.toggle-switch.active .toggle-slider {
+    transform: translateX(30px);
+}
+
+.local-file-section {
+    margin-top: 16px;
+    animation: slideDown 0.3s ease;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.file-upload-area {
+    border: 2px dashed #ccc;
+    border-radius: 8px;
+    padding: 24px;
+    text-align: center;
+    transition: all 0.2s ease;
+    background: #fafafa;
+}
+
+.file-upload-area:hover {
+    border-color: #007acc;
+    background: #f0f8ff;
+}
+
+.upload-placeholder {
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+}
+
+.upload-icon {
+    font-size: 2em;
+    color: #007acc;
+}
+
+.upload-text {
+    font-size: 1.1em;
+    font-weight: 600;
+    color: #333;
+}
+
+.upload-hint {
+    font-size: 0.9em;
+    color: #666;
+}
+
+.file-info {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #e8f4fd;
+    border: 1px solid #b3d9f2;
+    border-radius: 6px;
+    padding: 12px 16px;
+    margin-top: 12px;
+}
+
+.file-details {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.file-name {
+    font-weight: 600;
+    color: #333;
+}
+
+.file-size {
+    color: #666;
+    font-size: 0.9em;
+}
+
+.remove-file {
+    background: #ff4757;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    margin-left: 12px;
+    transition: background 0.2s ease;
+}
+
+.remove-file:hover {
+    background: #ff3838;
+}
+
+            
+@media (max-width: 768px) {
+    .source-toggle-container {
+        flex-direction: column;
+        gap: 16px;
+        text-align: center;
+    }
+    
+    .toggle-switch {
+        order: -1;
+        margin: 0 auto;
+    }
+    
+    .iso-source-selection {
+        padding: 20px;
+        margin: 20px 0;
+    }
+    
+    .file-upload-area {
+        padding: 20px;
+    }
+    
+    .upload-icon {
+        font-size: 1.5em;
+    }
+    
+    .toggle-option {
+        padding: 8px;
+    }
+    
+    .toggle-icon {
+        font-size: 1.5em;
+        margin-bottom: 4px;
     }
 } 
