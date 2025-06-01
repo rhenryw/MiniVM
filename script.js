@@ -10,6 +10,7 @@ class DSLLinuxVM {
         this.localIsoFile = null;
         this.localIsoUrl = null;
         this.hostedIsoAvailable = null;
+        this.hasScreenActivity = false;
         
         this.initializeParticles();
         this.bindEvents();
@@ -205,6 +206,7 @@ class DSLLinuxVM {
     async startVM() {
         if (this.isVMStarted) return;
         
+        this.hasScreenActivity = false;
         this.hideDownloadProgress();
         
         if (this.selectedIsoSource === 'local' && !this.localIsoFile) {
@@ -258,15 +260,41 @@ class DSLLinuxVM {
 
             let cdromConfig;
             if (this.selectedIsoSource === 'local') {
+                console.log('Loading local ISO file:', {
+                    name: this.localIsoFile.name,
+                    size: this.localIsoFile.size,
+                    type: this.localIsoFile.type,
+                    sizeMB: Math.round(this.localIsoFile.size / (1024 * 1024))
+                });
+                
+                this.updateStatus('Reading local ISO file...');
                 const arrayBuffer = await this.localIsoFile.arrayBuffer();
+                
+                console.log('Local ISO ArrayBuffer created:', {
+                    byteLength: arrayBuffer.byteLength,
+                    sizeMB: Math.round(arrayBuffer.byteLength / (1024 * 1024))
+                });
+                
                 cdromConfig = {
                     buffer: arrayBuffer,
+                    async: false,
                 };
+                
+                this.updateStatus('Local ISO loaded, starting VM...');
             } else {
                 cdromConfig = {
                     url: "dsl-2024.rc7.iso",
                 };
             }
+
+            console.log('V86 Configuration:', {
+                cdromConfig: this.selectedIsoSource === 'local' ? 
+                    { buffer: `ArrayBuffer(${cdromConfig.buffer.byteLength} bytes)` } : 
+                    cdromConfig,
+                memory_size: 512 * 1024 * 1024,
+                vga_memory_size: 16 * 1024 * 1024,
+                boot_order: 0x231
+            });
 
             this.emulator = new V86({
                 wasm_path: "js/v86.wasm",
@@ -303,11 +331,26 @@ class DSLLinuxVM {
                 }
             }, 30000); 
 
+            let screenActivityTimeout;
+            if (this.selectedIsoSource === 'local') {
+                screenActivityTimeout = setTimeout(() => {
+                    if (!this.hasScreenActivity && this.isVMStarted) {
+                        console.warn('No screen activity detected for local ISO after 15 seconds');
+                        this.updateStatus('⚠️ Local ISO may be incompatible or corrupted. Try a different ISO file.');
+                    }
+                }, 15000);
+            }
+
             this.emulator.add_listener("emulator-ready", () => {
                 clearTimeout(initTimeout);
                 this.isVMStarted = true;
-                console.log('VM Ready - Starting DSL Linux boot process...');
-                this.updateStatus('VM started! DSL Linux is booting...');
+                console.log('VM Ready - Starting boot process...');
+                if (this.selectedIsoSource === 'local') {
+                    console.log('Local ISO VM ready, booting from:', this.localIsoFile.name);
+                    this.updateStatus(`${this.localIsoFile.name} loaded! Booting...`);
+                } else {
+                    this.updateStatus('VM started! DSL Linux is booting...');
+                }
                 
                 setTimeout(() => {
                     if (this.emulator) {
@@ -317,19 +360,51 @@ class DSLLinuxVM {
             });
 
             this.emulator.add_listener("emulator-started", () => {
-                console.log('VM Started - DSL Linux is booting...');
-                this.updateStatus('DSL Linux is booting... Please wait.');
+                console.log('VM Started - Boot process initiated...');
+                if (this.selectedIsoSource === 'local') {
+                    this.updateStatus(`${this.localIsoFile.name} is booting... Please wait.`);
+                } else {
+                    this.updateStatus('DSL Linux is booting... Please wait.');
+                }
             });
 
             this.emulator.add_listener("emulator-stopped", () => {
                 console.log('VM Stopped');
+                if (this.selectedIsoSource === 'local') {
+                    console.warn('Local ISO VM stopped unexpectedly');
+                    this.updateStatus('❌ VM stopped unexpectedly. Check browser console for details.');
+                }
             });
 
             this.emulator.add_listener("emulator-error", (error) => {
                 console.error('VM Error:', error);
-                this.updateStatus('❌ VM Error: ' + error);
+                if (this.selectedIsoSource === 'local') {
+                    this.updateStatus(`❌ VM Error with ${this.localIsoFile.name}: ${error}`);
+                } else {
+                    this.updateStatus('❌ VM Error: ' + error);
+                }
                 this.updateButton('Start VM', false);
                 this.exitVM();
+            });
+
+            this.emulator.add_listener("screen-put-char", () => {
+                if (!this.hasScreenActivity) {
+                    this.hasScreenActivity = true;
+                    console.log('First screen activity detected');
+                    if (screenActivityTimeout) {
+                        clearTimeout(screenActivityTimeout);
+                    }
+                }
+            });
+
+            this.emulator.add_listener("screen-update", () => {
+                if (!this.hasScreenActivity) {
+                    this.hasScreenActivity = true;
+                    console.log('Screen update detected');
+                    if (screenActivityTimeout) {
+                        clearTimeout(screenActivityTimeout);
+                    }
+                }
             });
 
             if (this.selectedIsoSource === 'hosted') {
