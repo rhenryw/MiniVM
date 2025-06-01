@@ -113,6 +113,21 @@
         <div class="vm-controls">
             <button class="exit-button" onclick="exitVM()">Exit Fullscreen (ESC)</button>
         </div>
+                <div class="download-progress-container vm-progress" id="vmDownloadProgressContainer" style="display: none;">
+            <div class="progress-info">
+                <span class="progress-text" id="vmProgressText">Downloading DSL Linux ISO...</span>
+                <span class="progress-percentage" id="vmProgressPercentage">0%</span>
+            </div>
+            <div class="progress-bar-wrapper">
+                <div class="progress-bar" id="vmProgressBar">
+                    <div class="progress-fill" id="vmProgressFill"></div>
+                </div>
+            </div>
+            <div class="progress-details">
+                <span class="progress-loaded" id="vmProgressLoaded">0 MB</span>
+                <span class="progress-total" id="vmProgressTotal">of 685 MB</span>
+            </div>
+        </div>
         
         <div id="screen_container">
             <div>Initializing Virtual Machine...</div>

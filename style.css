@@ -132,6 +132,7 @@ h1 {
     }
 }
 
+/* Download Progress Bar Styles */
 .download-progress-container {
     margin: 1.5rem 0;
     padding: 1.5rem;
@@ -218,25 +219,25 @@ h1 {
     color: #888;
 }
 
-@media (max-width: 768px) {
-    .download-progress-container {
-        margin: 1rem 0;
-        padding: 1rem;
-    }
-    
-    .progress-info {
-        flex-direction: column;
-        gap: 0.5rem;
-        text-align: center;
-    }
-    
-    .progress-text {
-        font-size: 0.9rem;
-    }
-    
-    .progress-percentage {
-        text-align: center;
-    }
+.vm-progress {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 1001;
+    background: rgba(0, 0, 0, 0.9);
+    border: 1px solid rgba(102, 126, 234, 0.3);
+    backdrop-filter: blur(10px);
+}
+
+.vm-progress .progress-text,
+.vm-progress .progress-loaded,
+.vm-progress .progress-total {
+    color: #ffffff;
+}
+
+.vm-progress .progress-percentage {
+    color: #667eea;
 }
 
 .status {
@@ -485,69 +486,6 @@ h1 {
     background: #e5e5e5;
 }
 
-@media (max-width: 768px) {
-    .main-content {
-        padding: 2rem;
-        margin: 0 1rem;
-    }
-
-    h1 {
-        font-size: 2rem;
-    }
-
-    .subtitle {
-        font-size: 1rem;
-    }
-
-    .start-button {
-        padding: 0.75rem 2rem;
-        font-size: 1.1rem;
-    }
-
-    .faq-section {
-        margin-top: 2rem;
-        padding-top: 1.5rem;
-    }
-
-    .faq-section h3 {
-        font-size: 1.2rem;
-        margin-bottom: 1rem;
-    }
-
-    .faq-content {
-        gap: 1rem;
-        margin-bottom: 1.5rem;
-    }
-
-    .faq-item {
-        padding: 0.75rem;
-    }
-
-    .faq-item strong {
-        font-size: 0.9rem;
-    }
-
-    .faq-item p {
-        font-size: 0.85rem;
-    }
-
-    .disclaimer p {
-        font-size: 0.85rem;
-    }
-
-    .pause-overlay .pause-dialog {
-        padding: 1.5rem;
-    }
-    
-    .pause-overlay .dialog-buttons {
-        flex-direction: column;
-    }
-    
-    .pause-overlay .dialog-buttons button {
-        width: 100%;
-    }
-}
-
 .iso-source-selection {
     background: rgba(255, 255, 255, 0.95);
     border-radius: 12px;
@@ -766,8 +704,93 @@ h1 {
     background: #ff3838;
 }
 
-            
 @media (max-width: 768px) {
+    .main-content {
+        padding: 2rem;
+        margin: 0 1rem;
+    }
+
+    h1 {
+        font-size: 2rem;
+    }
+
+    .subtitle {
+        font-size: 1rem;
+    }
+
+    .start-button {
+        padding: 0.75rem 2rem;
+        font-size: 1.1rem;
+    }
+
+    .download-progress-container {
+        margin: 1rem 0;
+        padding: 1rem;
+    }
+    
+    .progress-info {
+        flex-direction: column;
+        gap: 0.5rem;
+        text-align: center;
+    }
+    
+    .progress-text {
+        font-size: 0.9rem;
+    }
+    
+    .progress-percentage {
+        text-align: center;
+    }
+
+    .vm-progress {
+        margin: 1rem;
+        padding: 1rem;
+        max-width: calc(100vw - 2rem);
+    }
+
+    .faq-section {
+        margin-top: 2rem;
+        padding-top: 1.5rem;
+    }
+
+    .faq-section h3 {
+        font-size: 1.2rem;
+        margin-bottom: 1rem;
+    }
+
+    .faq-content {
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .faq-item {
+        padding: 0.75rem;
+    }
+
+    .faq-item strong {
+        font-size: 0.9rem;
+    }
+
+    .faq-item p {
+        font-size: 0.85rem;
+    }
+
+    .disclaimer p {
+        font-size: 0.85rem;
+    }
+
+    .pause-overlay .pause-dialog {
+        padding: 1.5rem;
+    }
+    
+    .pause-overlay .dialog-buttons {
+        flex-direction: column;
+    }
+    
+    .pause-overlay .dialog-buttons button {
+        width: 100%;
+    }
+
     .source-toggle-container {
         flex-direction: column;
         gap: 16px;

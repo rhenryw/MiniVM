@@ -133,14 +133,14 @@ class DSLLinuxVM {
     }
 
     showDownloadProgress() {
-        const progressContainer = document.getElementById('downloadProgressContainer');
+        const progressContainer = document.getElementById('vmDownloadProgressContainer');
         if (progressContainer) {
             progressContainer.style.display = 'block';
         }
     }
 
     hideDownloadProgress() {
-        const progressContainer = document.getElementById('downloadProgressContainer');
+        const progressContainer = document.getElementById('vmDownloadProgressContainer');
         if (progressContainer) {
             progressContainer.style.display = 'none';
         }
@@ -151,8 +151,8 @@ class DSLLinuxVM {
         
         if (!lengthComputable || !total) {
         
-            const progressText = document.getElementById('progressText');
-            const progressPercentage = document.getElementById('progressPercentage');
+            const progressText = document.getElementById('vmProgressText');
+            const progressPercentage = document.getElementById('vmProgressPercentage');
             
             if (progressText) progressText.textContent = 'Downloading DSL Linux ISO...';
             if (progressPercentage) progressPercentage.textContent = '...';
@@ -163,18 +163,18 @@ class DSLLinuxVM {
         const loadedMB = (loaded / (1024 * 1024)).toFixed(1);
         const totalMB = (total / (1024 * 1024)).toFixed(0);
 
-        const progressFill = document.getElementById('progressFill');
+        const progressFill = document.getElementById('vmProgressFill');
         if (progressFill) {
             progressFill.style.width = `${percentage}%`;
         }
 
-        const progressPercentage = document.getElementById('progressPercentage');
+        const progressPercentage = document.getElementById('vmProgressPercentage');
         if (progressPercentage) {
             progressPercentage.textContent = `${percentage}%`;
         }
 
-        const progressLoaded = document.getElementById('progressLoaded');
-        const progressTotal = document.getElementById('progressTotal');
+        const progressLoaded = document.getElementById('vmProgressLoaded');
+        const progressTotal = document.getElementById('vmProgressTotal');
         
         if (progressLoaded) {
             progressLoaded.textContent = `${loadedMB} MB`;
