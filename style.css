@@ -482,8 +482,17 @@ h1 {
     color: #007acc;
 }
 
-.toggle-option:hover {
+.toggle-option:hover:not(.disabled) {
     background: rgba(0, 122, 204, 0.05);
+}
+
+.toggle-option.disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+}
+
+.toggle-option.disabled:hover {
+    background: transparent;
 }
 
 .toggle-icon {
@@ -524,6 +533,12 @@ h1 {
 
 .toggle-switch.active {
     background: #007acc;
+}
+
+.toggle-switch:disabled,
+.toggle-switch[style*="cursor: not-allowed"] {
+    cursor: not-allowed;
+    opacity: 0.5;
 }
 
 .toggle-slider {

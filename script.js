@@ -1,3 +1,5 @@
+// © 2025 rhw/https://rhw.one | MiniVM
+
 class DSLLinuxVM {
     constructor() {
         this.emulator = null;
@@ -7,11 +9,11 @@ class DSLLinuxVM {
         this.selectedIsoSource = 'hosted'; 
         this.localIsoFile = null;
         this.localIsoUrl = null;
+        this.hostedIsoAvailable = null;
         
         this.initializeParticles();
         this.bindEvents();
-        this.initializeIsoSelection();
-        this.updateStatus('Choose your DSL Linux source and click Start VM to launch in fullscreen mode');
+        this.initializeApp();
     }
 
     initializeParticles() {
@@ -236,7 +238,7 @@ class DSLLinuxVM {
                     this.updateButton('Start VM', false);
                     this.exitVM();
                 }
-            }, 30000); // 30 second timeout
+            }, 30000); 
 
             this.emulator.add_listener("emulator-ready", () => {
                 clearTimeout(initTimeout);
@@ -285,10 +287,12 @@ class DSLLinuxVM {
             { url: 'js/vgabios.bin', name: 'VGA BIOS' }
         ];
 
-        if (this.selectedIsoSource === 'hosted') {
+        if (this.selectedIsoSource === 'hosted' && this.hostedIsoAvailable) {
             resources.push({ url: 'dsl-2024.rc7.iso', name: 'DSL Linux ISO' });
-        } else {
+        } else if (this.selectedIsoSource === 'local') {
             console.log('✓ Using local ISO file:', this.localIsoFile.name);
+        } else {
+            console.log('✓ Skipping hosted ISO check (not available)');
         }
 
         for (const resource of resources) {
@@ -297,13 +301,6 @@ class DSLLinuxVM {
                 const response = await fetch(resource.url, { method: 'HEAD' });
                 if (!response.ok) {
                     console.error(`Failed to load ${resource.name}:`, response.status, response.statusText);
-                    
-                    if (resource.url.includes('.iso')) {
-                        return { 
-                            success: false, 
-                            error: `DSL Linux ISO not available (${response.status}). File may be too large for deployment platform. Try using a local ISO file instead.` 
-                        };
-                    }
                     
                     return { 
                         success: false, 
@@ -327,13 +324,6 @@ class DSLLinuxVM {
                 }
             } catch (error) {
                 console.error(`Error checking ${resource.name}:`, error);
-                
-                if (resource.url.includes('.iso')) {
-                    return { 
-                        success: false, 
-                        error: `DSL Linux ISO cannot be loaded: ${error.message}. Consider using a local ISO file instead.` 
-                    };
-                }
                 
                 return { 
                     success: false, 
@@ -468,10 +458,21 @@ class DSLLinuxVM {
     initializeIsoSelection() {
         const toggleSwitch = document.getElementById('sourceToggle');
         const toggleOptions = document.querySelectorAll('.toggle-option');
+        const hostedOption = document.querySelector('.toggle-option[data-value="hosted"]');
+        const localOption = document.querySelector('.toggle-option[data-value="local"]');
         
-        this.updateToggleState('hosted');
+        if (!this.hostedIsoAvailable) {
+            this.selectedIsoSource = 'local';
+            this.disableHostedOption();
+            this.updateToggleState('local');
+            this.toggleLocalFileSection();
+        } else {
+            this.updateToggleState('hosted');
+        }
         
         toggleSwitch.addEventListener('click', () => {
+            if (!this.hostedIsoAvailable) return; 
+            
             const newSource = this.selectedIsoSource === 'hosted' ? 'local' : 'hosted';
             this.selectedIsoSource = newSource;
             this.updateToggleState(newSource);
@@ -482,6 +483,9 @@ class DSLLinuxVM {
         toggleOptions.forEach(option => {
             option.addEventListener('click', () => {
                 const value = option.dataset.value;
+                
+                if (value === 'hosted' && !this.hostedIsoAvailable) return;
+                
                 if (value !== this.selectedIsoSource) {
                     this.selectedIsoSource = value;
                     this.updateToggleState(value);
@@ -525,6 +529,29 @@ class DSLLinuxVM {
                 this.handleFileSelection(files[0]);
             }
         });
+
+        this.updateStartButtonState();
+    }
+
+    disableHostedOption() {
+        const hostedOption = document.querySelector('.toggle-option[data-value="hosted"]');
+        const toggleSwitch = document.getElementById('sourceToggle');
+        
+        if (hostedOption) {
+            hostedOption.classList.add('disabled');
+            hostedOption.style.opacity = '0.5';
+            hostedOption.style.cursor = 'not-allowed';
+            
+            const description = hostedOption.querySelector('.toggle-description');
+            if (description) {
+                description.textContent = 'Not available (storage limitations)';
+            }
+        }
+        
+        if (toggleSwitch) {
+            toggleSwitch.style.opacity = '0.5';
+            toggleSwitch.style.cursor = 'not-allowed';
+        }
     }
 
     updateToggleState(selectedValue) {
@@ -625,15 +652,65 @@ class DSLLinuxVM {
     updateStartButtonState() {
         const startButton = document.getElementById('startButton');
         
-        if (this.selectedIsoSource === 'hosted') {
+        if (this.selectedIsoSource === 'hosted' && this.hostedIsoAvailable) {
             startButton.disabled = false;
             this.updateStatus('Ready to start with hosted DSL Linux version');
         } else if (this.selectedIsoSource === 'local' && this.localIsoFile) {
             startButton.disabled = false;
             this.updateStatus(`Ready to start with local ISO: ${this.localIsoFile.name}`);
+        } else if (this.selectedIsoSource === 'local' && !this.localIsoFile) {
+            startButton.disabled = true;
+            if (!this.hostedIsoAvailable) {
+                this.updateStatus('Hosted DSL Linux not available - please select a local ISO file to continue');
+            } else {
+                this.updateStatus('Please select a local ISO file to continue');
+            }
+        } else if (this.selectedIsoSource === 'hosted' && !this.hostedIsoAvailable) {
+            startButton.disabled = true;
+            this.updateStatus('Hosted DSL Linux not available - switching to local mode required');
         } else {
             startButton.disabled = true;
-            this.updateStatus('Please select a local ISO file to continue');
+            this.updateStatus('Please select an ISO source to continue');
+        }
+    }
+
+    async initializeApp() {
+        this.updateStatus('Checking hosted DSL Linux availability...');
+        await this.checkHostedIsoAvailability();
+        
+        this.initializeIsoSelection();
+        
+        if (this.hostedIsoAvailable) {
+            this.updateStatus('Choose your DSL Linux source and click Start VM to launch in fullscreen mode');
+        } else {
+            this.updateStatus('Hosted DSL Linux not available - please select a local ISO file to continue');
+        }
+    }
+
+    async checkHostedIsoAvailability() {
+        try {
+            console.log('Checking hosted DSL Linux ISO availability...');
+            const response = await fetch('dsl-2024.rc7.iso', { method: 'HEAD' });
+            
+            if (response.ok) {
+                const contentLength = response.headers.get('content-length');
+                if (contentLength) {
+                    const sizeMB = Math.round(parseInt(contentLength) / (1024 * 1024));
+                    console.log(`✓ Hosted DSL Linux ISO available (${sizeMB}MB)`);
+                    if (sizeMB < 100) {
+                        console.warn('Hosted ISO seems smaller than expected. Original is ~685MB.');
+                    }
+                } else {
+                    console.log('✓ Hosted DSL Linux ISO available (size unknown)');
+                }
+                this.hostedIsoAvailable = true;
+            } else {
+                console.warn(`Hosted DSL Linux ISO not available (${response.status})`);
+                this.hostedIsoAvailable = false;
+            }
+        } catch (error) {
+            console.warn('Hosted DSL Linux ISO cannot be loaded:', error.message);
+            this.hostedIsoAvailable = false;
         }
     }
 }
