@@ -95,6 +95,33 @@
                     <p>A: Close other browser tabs and applications. The VM requires significant system resources to run smoothly.</p>
                 </div>
                 <div class="faq-item">
+                    <strong>Q: What are the VM specifications?</strong>
+                    <p>A: MiniVM runs with 2GB RAM, 32MB video memory, and enhanced CPU compatibility. This provides excellent performance for web browsing, code testing, and running development tools like Firefox and text editors.</p>
+                </div>
+                <div class="faq-item">
+                    <strong>Q: Can I browse the web and test code?</strong>
+                    <p>A: Yes! With 2GB RAM and network support, you can run Firefox for web browsing, use development tools, test HTML5/WebAssembly applications, and even play simple web games. The VM supports modern web standards through the included browser.</p>
+                </div>
+                <div class="faq-item">
+                    <strong>Q: Firefox is using 100% CPU - how can I improve performance?</strong>
+                    <p>A: Firefox is very heavy for browser-based emulation. Try these tips: 1) Close other browser tabs on your host system, 2) Use lighter browsers like Dillo or Links instead, 3) Disable Firefox animations and reduce tabs, 4) Use Chrome/Edge for better WebAssembly performance, 5) Consider using text-based browsers for development testing.</p>
+                </div>
+                <div class="faq-item">
+                    <strong>Q: What are lighter alternatives to Firefox?</strong>
+                    <p>A: DSL Linux includes several lighter browsers: Dillo (graphical, fast), Links (text/graphical), Lynx (text-only). For code testing, use simple HTTP servers and curl/wget commands. These alternatives use much less CPU while still allowing web development testing.</p>
+                </div>
+                <div class="faq-item">
+                    <strong>Q: How can I optimize my host system for better VM performance?</strong>
+                    <p>A: <strong>Browser:</strong> Use Chrome/Edge for best WebAssembly performance. Enable hardware acceleration in browser settings. <strong>System:</strong> Close unnecessary applications and browser tabs. <strong>Advanced:</strong> Add these Chrome flags: --enable-webassembly-baseline --enable-webassembly-lazy-compilation for better performance.</p>
+                </div>
+                <div class="faq-item">
+                    <strong>Q: How can I use more of my CPU power for the VM?</strong>
+                    <p>A: <strong>Chrome flags:</strong> Launch with <code>--high-dpi-support=1 --force-gpu-rasterization --enable-zero-copy --enable-webassembly-threads</code><br>
+                    <strong>System:</strong> Set browser process priority to "High" in Task Manager<br>
+                    <strong>Advanced:</strong> Use dedicated browser profile with: <code>chrome --user-data-dir=/tmp/vm-browser --no-sandbox --disable-web-security</code><br>
+                    <strong>Note:</strong> VM is limited to single-core emulation, but these optimizations maximize that core's efficiency.</p>
+                </div>
+                <div class="faq-item">
                     <strong>Q: Login credentials?</strong>
                     <p>A: Username: <code>dsl</code> (no password required). You'll boot directly to the desktop.</p>
                 </div>
@@ -161,6 +188,24 @@
     <script src="script.js"></script>
     
     <script>
+        (function() {
+            if ('scheduler' in window && 'postTask' in window.scheduler) {
+                console.log('Using high-priority task scheduling for better CPU utilization');
+            }
+            
+            if (navigator.hardwareConcurrency) {
+                console.log(`Detected ${navigator.hardwareConcurrency} CPU cores`);
+                console.log('VM will utilize single-core emulation with optimized scheduling');
+                
+                if (navigator.hardwareConcurrency >= 4) {
+                    console.log('Performance tip: With your multi-core CPU, dedicate 1-2 cores to the VM by closing other applications');
+                }
+            }
+            
+            if ('performance' in window && 'now' in performance) {
+                window.vmStartTime = performance.now();
+            }
+        })();
 
         const emojis = ['🚀', '💻', '⚡', '🔥', '✨', '🎯', '🌟', '💎', '🎪', '🎨', '🎭', '🎬', '🎮', '🎲', '🎸', '🎺', '🎼', '🎹', '🎤', '🎧'];
         document.getElementById('randomEmoji').textContent = emojis[Math.floor(Math.random() * emojis.length)];

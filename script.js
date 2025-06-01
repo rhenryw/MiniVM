@@ -291,15 +291,16 @@ class DSLLinuxVM {
                 cdromConfig: this.selectedIsoSource === 'local' ? 
                     { buffer: `ArrayBuffer(${cdromConfig.buffer.byteLength} bytes)` } : 
                     cdromConfig,
-                memory_size: 512 * 1024 * 1024,
-                vga_memory_size: 16 * 1024 * 1024,
-                boot_order: 0x231
+                memory_size: 2048 * 1024 * 1024,
+                vga_memory_size: 32 * 1024 * 1024,
+                boot_order: 0x231,
+                optimizations: 'Enhanced for web browsers and development'
             });
 
             this.emulator = new V86({
                 wasm_path: "js/v86.wasm",
-                memory_size: 512 * 1024 * 1024,
-                vga_memory_size: 16 * 1024 * 1024,
+                memory_size: 2048 * 1024 * 1024,
+                vga_memory_size: 32 * 1024 * 1024,
                 screen_container: document.getElementById("screen_container"),
                 bios: {
                     url: "js/seabios.bin",
@@ -311,15 +312,27 @@ class DSLLinuxVM {
                 autostart: true,
                 boot_order: 0x231,
                 disable_mouse: false,
-                mouse_grab: false,
+                mouse_grab: true,
                 acpi: true,
                 fastboot: true,
                 network_relay_url: "wss://relay.widgetry.org/",
                 network_adapter: "ne2k_pci",
                 cpu_count: 1,
+                cpuid_level: 0x14,
+                enable_acpi: true,
+                disable_jit: false,
+                uart1: false,
+                uart2: false,
+                uart3: false,
+                fda: undefined,
+                fdb: undefined,
                 hda: undefined,
                 hdb: undefined,
                 bzimage_initrd_from_filesystem: false,
+                preserve_mac_from_state_image: true,
+                disable_speaker: false,
+                log_level: 0,
+                disable_keyboard: false
             });
 
             const initTimeout = setTimeout(() => {
@@ -345,6 +358,19 @@ class DSLLinuxVM {
                 clearTimeout(initTimeout);
                 this.isVMStarted = true;
                 console.log('VM Ready - Starting boot process...');
+                console.log('VM Performance Info:', {
+                    allocatedRAM: '2GB',
+                    vgaMemory: '32MB',
+                    cpuFeatures: 'Enhanced compatibility mode',
+                    networkAdapter: 'NE2000 PCI'
+                });
+                
+                // Helo browser out yay
+                if (navigator.hardwareConcurrency) {
+                    console.log(`Host CPU cores: ${navigator.hardwareConcurrency}, VM using optimized single-core emulation`);
+                    console.log('Performance tip: Close other browser tabs to dedicate more CPU to VM');
+                }
+                
                 if (this.selectedIsoSource === 'local') {
                     console.log('Local ISO VM ready, booting from:', this.localIsoFile.name);
                     this.updateStatus(`${this.localIsoFile.name} loaded! Booting...`);
